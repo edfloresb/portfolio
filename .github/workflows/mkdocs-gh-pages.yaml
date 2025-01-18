@@ -8,12 +8,14 @@ on:
   repository_dispatch:
     types: [deploy-mkdocs]
 jobs:
-  download-and-deploy:
+  download-artifact:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo2
         uses: actions/checkout@v4
-
+        with:
+          path: temp/
+          ref: gh-pages
       - name: Set RUN_ID
         run: echo "RUN_ID=${{ github.event.client_payload.run_id || inputs.run_id }}" >> $GITHUB_ENV
 
@@ -22,5 +24,13 @@ jobs:
         with:
           name: mkdocs-site
           github-token: ${{ secrets.PAT_BUILD_WORKFLOW }}
-          run_id: ${{ env.RUN_ID }}
+          run-id: ${{ env.RUN_ID }}
           repository: edfloresb/portfolio-private
+          path: site
+      - name: cp files
+        run: |
+          cp -rf site/. temp/
+          cd temp
+          git add .
+          git commit -m "Trigger deploy for run ${{ env.RUN_ID }}"
+          git push
