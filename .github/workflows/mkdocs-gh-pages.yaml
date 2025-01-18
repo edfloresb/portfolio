@@ -32,5 +32,8 @@ jobs:
           cp -rf site/. temp/
           cd temp
           git add .
+          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git commit -m "Trigger deploy for run ${{ env.RUN_ID }}"
           git push
+
