@@ -1,27 +1,26 @@
 name: ci 
 on:
-  push:
-    branches:
-      - main
-permissions:
-  contents: write
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "GitHub Actions run ID from repo1"
+        required: true
+  repository_dispatch:
+    types: [deploy-mkdocs]
 jobs:
-  deploy:
+  download-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout repo2
+        uses: actions/checkout@v4
+
+      - name: Set RUN_ID
+        run: echo "RUN_ID=${{ github.event.client_payload.run_id || inputs.run_id }}" >> $GITHUB_ENV
+
+      - name: Download artifact from repo1
+        uses: actions/download-artifact@v4
         with:
-          python-version: 3.x
-      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-        id: cache_info
-        env:
-          CACHE_ID: cache_id
-      - uses: actions/cache@v4
-        with:
-          key: mkdocs-material-${{ steps.cache_info.outputs.cache_id }}
-          path: .cache
-          restore-keys: |
-            mkdocs-material-
-      - run: pip install mkdocs-material 
-      - run: mkdocs gh-deploy --force
+          name: mkdocs-site
+          github-token: ${{ secrets.PAT_BUILD_WORKFLOW }}
+          run_id: ${{ env.RUN_ID }}
+          repository: edfloresb/portfolio-private
